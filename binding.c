@@ -167,6 +167,8 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
   V(height);
 #undef V
 
+  len = width * height * 4;
+
   js_value_t *buffer;
   err = js_create_external_arraybuffer(env, data, len, bare_png__on_finalize, NULL, &buffer);
   assert(err == 0);

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.31)
 find_package(cmake-bare REQUIRED PATHS node_modules/cmake-bare)
 find_package(cmake-fetch REQUIRED PATHS node_modules/cmake-fetch)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 project(bare_png C)
 
 fetch_package("github:pnggroup/libpng@1.6.48")

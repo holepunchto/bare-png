@@ -24,7 +24,7 @@ typedef struct {
   char message[256];
 } bare_png_error_t;
 
-void
+static void
 bare_png__on_error(png_structp png, png_const_charp message) {
   bare_png_error_t *error = (bare_png_error_t *) png_get_error_ptr(png);
 
@@ -38,7 +38,7 @@ bare_png__on_finalize(js_env_t *env, void *data, void *finalize_hint) {
   free(data);
 }
 
-void
+static void
 bare_png__on_read(png_structp png, png_bytep data, png_size_t len) {
   bare_png_reader_t *reader = (bare_png_reader_t *) png_get_io_ptr(png);
 
@@ -51,7 +51,7 @@ bare_png__on_read(png_structp png, png_bytep data, png_size_t len) {
   }
 }
 
-void
+static void
 bare_png__on_write(png_structp png, png_bytep data, png_size_t len) {
   bare_png_writer_t *writer = (bare_png_writer_t *) png_get_io_ptr(png);
 
@@ -66,7 +66,7 @@ bare_png__on_write(png_structp png, png_bytep data, png_size_t len) {
   writer->len += len;
 }
 
-void
+static void
 bare_png__on_flush(png_structp png) {}
 
 static js_value_t *

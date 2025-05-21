@@ -87,54 +87,54 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
 
   bare_png_error_t error;
 
-  png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, &error, bare_png__on_error, NULL);
+  png_structp decoder = png_create_read_struct(PNG_LIBPNG_VER_STRING, &error, bare_png__on_error, NULL);
 
-  png_infop info_ptr = png_create_info_struct(png_ptr);
+  png_infop decoder_info = png_create_info_struct(decoder);
 
   if (setjmp(error.jump)) {
     err = js_throw_error(env, NULL, error.message);
     assert(err == 0);
 
-    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    png_destroy_read_struct(&decoder, &decoder_info, NULL);
 
     return NULL;
   }
 
   bare_png_reader_t reader = {png, len, 0};
 
-  png_set_read_fn(png_ptr, &reader, bare_png__on_read);
+  png_set_read_fn(decoder, &reader, bare_png__on_read);
 
-  png_read_info(png_ptr, info_ptr);
+  png_read_info(decoder, decoder_info);
 
-  int width = png_get_image_width(png_ptr, info_ptr);
-  int height = png_get_image_height(png_ptr, info_ptr);
-  int color_type = png_get_color_type(png_ptr, info_ptr);
-  int bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+  int width = png_get_image_width(decoder, decoder_info);
+  int height = png_get_image_height(decoder, decoder_info);
+  int color_type = png_get_color_type(decoder, decoder_info);
+  int bit_depth = png_get_bit_depth(decoder, decoder_info);
 
   if (bit_depth == 16) {
-    png_set_strip_16(png_ptr);
+    png_set_strip_16(decoder);
   }
 
   if (color_type == PNG_COLOR_TYPE_PALETTE)
-    png_set_palette_to_rgb(png_ptr);
+    png_set_palette_to_rgb(decoder);
 
   if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) {
-    png_set_expand_gray_1_2_4_to_8(png_ptr);
+    png_set_expand_gray_1_2_4_to_8(decoder);
   }
 
-  if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-    png_set_tRNS_to_alpha(png_ptr);
+  if (png_get_valid(decoder, decoder_info, PNG_INFO_tRNS)) {
+    png_set_tRNS_to_alpha(decoder);
   }
 
   if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY) {
-    png_set_add_alpha(png_ptr, 0xFF, PNG_FILLER_AFTER);
+    png_set_add_alpha(decoder, 0xFF, PNG_FILLER_AFTER);
   }
 
   if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
-    png_set_gray_to_rgb(png_ptr);
+    png_set_gray_to_rgb(decoder);
   }
 
-  png_read_update_info(png_ptr, info_ptr);
+  png_read_update_info(decoder, decoder_info);
 
   png_bytep *rows = malloc(sizeof(png_bytep) * height);
 
@@ -144,9 +144,9 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
     rows[y] = data + y * width * 4;
   }
 
-  png_read_image(png_ptr, rows);
+  png_read_image(decoder, rows);
 
-  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+  png_destroy_read_struct(&decoder, &decoder_info, NULL);
 
   free(rows);
 
@@ -203,26 +203,26 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
 
   bare_png_error_t error;
 
-  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, &error, bare_png__on_error, NULL);
+  png_structp encoder = png_create_write_struct(PNG_LIBPNG_VER_STRING, &error, bare_png__on_error, NULL);
 
-  png_infop info_ptr = png_create_info_struct(png_ptr);
+  png_infop encoder_info = png_create_info_struct(encoder);
 
   if (setjmp(error.jump)) {
     err = js_throw_error(env, NULL, error.message);
     assert(err == 0);
 
-    png_destroy_write_struct(&png_ptr, &info_ptr);
+    png_destroy_write_struct(&encoder, &encoder_info);
 
     return NULL;
   }
 
   bare_png_writer_t writer = {NULL, 0, 0};
 
-  png_set_write_fn(png_ptr, &writer, bare_png__on_write, bare_png__on_flush);
+  png_set_write_fn(encoder, &writer, bare_png__on_write, bare_png__on_flush);
 
-  png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+  png_set_IHDR(encoder, encoder_info, width, height, 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
-  png_write_info(png_ptr, info_ptr);
+  png_write_info(encoder, encoder_info);
 
   png_bytep *rows = malloc(sizeof(png_bytep) * height);
 
@@ -230,10 +230,10 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
     rows[y] = data + y * width * 4;
   }
 
-  png_write_image(png_ptr, rows);
-  png_write_end(png_ptr, NULL);
+  png_write_image(encoder, rows);
+  png_write_end(encoder, NULL);
 
-  png_destroy_write_struct(&png_ptr, &info_ptr);
+  png_destroy_write_struct(&encoder, &encoder_info);
 
   free(rows);
 

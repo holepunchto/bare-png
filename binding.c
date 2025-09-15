@@ -126,7 +126,7 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
     png_set_tRNS_to_alpha(decoder);
   }
 
-  if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY) {
+  if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_PALETTE) {
     png_set_add_alpha(decoder, 0xFF, PNG_FILLER_AFTER);
   }
 

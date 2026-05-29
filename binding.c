@@ -3,6 +3,7 @@
 #include <js.h>
 #include <png.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -106,8 +107,8 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
 
   png_read_info(decoder, decoder_info);
 
-  int width = png_get_image_width(decoder, decoder_info);
-  int height = png_get_image_height(decoder, decoder_info);
+  png_uint_32 width = png_get_image_width(decoder, decoder_info);
+  png_uint_32 height = png_get_image_height(decoder, decoder_info);
   int color_type = png_get_color_type(decoder, decoder_info);
   int bit_depth = png_get_bit_depth(decoder, decoder_info);
 
@@ -136,12 +137,27 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
 
   png_read_update_info(decoder, decoder_info);
 
+  size_t rowbytes = png_get_rowbytes(decoder, decoder_info);
+
+  if (height == 0 || rowbytes == 0 || (size_t) height > SIZE_MAX / rowbytes || (size_t) height > SIZE_MAX / sizeof(png_bytep)) {
+    png_error(decoder, "Image dimensions out of range");
+  }
+
+  size_t data_len = rowbytes * height;
+
   png_bytep *rows = malloc(sizeof(png_bytep) * height);
+  if (rows == NULL) {
+    png_error(decoder, "Out of memory");
+  }
 
-  uint8_t *data = malloc(width * height * 4);
+  uint8_t *data = malloc(data_len);
+  if (data == NULL) {
+    free(rows);
+    png_error(decoder, "Out of memory");
+  }
 
-  for (int y = 0; y < height; y++) {
-    rows[y] = data + y * width * 4;
+  for (png_uint_32 y = 0; y < height; y++) {
+    rows[y] = data + (size_t) y * rowbytes;
   }
 
   png_read_image(decoder, rows);
@@ -167,10 +183,8 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
   V(height);
 #undef V
 
-  len = width * height * 4;
-
   js_value_t *buffer;
-  err = js_create_external_arraybuffer(env, data, len, bare_png__on_finalize, NULL, &buffer);
+  err = js_create_external_arraybuffer(env, data, data_len, bare_png__on_finalize, NULL, &buffer);
   assert(err == 0);
 
   err = js_set_named_property(env, result, "data", buffer);

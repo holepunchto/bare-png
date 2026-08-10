@@ -25,7 +25,7 @@ test('encode .png', (t) => {
   encoded = null
 })
 
-test.skip('decode rejects oversized dimensions without crashing', (t) => {
+test('decode rejects oversized dimensions without crashing', (t) => {
   // Regression: width * height * 4 used to overflow `int` and produce
   // a wrapped, undersized malloc — heap corruption on per-row writes.
   const malicious = buildPng(65536, 65536)

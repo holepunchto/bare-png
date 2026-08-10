@@ -170,7 +170,6 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
   png_destroy_read_struct(&decoder, &decoder_info, NULL);
 
   free(rows);
-  rows = NULL;
 
   js_value_t *result;
   err = js_create_object(env, &result);

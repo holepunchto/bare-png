@@ -27,6 +27,22 @@ test('decode rejects oversized dimensions without crashing', (t) => {
   t.exception(() => png.decode(malicious))
 })
 
+test('encode rejects invalid dimensions', (t) => {
+  t.exception(
+    () => png.encode({ width: 0, height: 0, data: new Uint8Array(0) }),
+    /Invalid image data/
+  )
+})
+
+test('encode rejects data smaller than width * height * 4', (t) => {
+  // Regression: encode used to trust the caller's dimensions and read
+  // width * height * 4 bytes from `data`, overflowing an undersized buffer.
+  t.exception(
+    () => png.encode({ width: 100, height: 100, data: new Uint8Array(4) }),
+    /Invalid image data/
+  )
+})
+
 function buildPng(width, height) {
   const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 

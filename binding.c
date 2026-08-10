@@ -211,7 +211,8 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
   assert(argc == 3);
 
   uint8_t *data;
-  err = js_get_typedarray_info(env, argv[0], NULL, (void **) &data, NULL, NULL, NULL);
+  size_t data_len;
+  err = js_get_typedarray_info(env, argv[0], NULL, (void **) &data, &data_len, NULL, NULL);
   assert(err == 0);
 
   int64_t width;
@@ -222,22 +223,33 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
   err = js_get_value_int64(env, argv[2], &height);
   assert(err == 0);
 
+  if (width <= 0 || height <= 0 || (size_t) height > SIZE_MAX / 4 / (size_t) width || (size_t) width * (size_t) height * 4 > data_len) {
+    err = js_throw_error(env, NULL, "Invalid image data");
+    assert(err == 0);
+
+    return NULL;
+  }
+
   bare_png_error_t error;
+
+  bare_png_writer_t writer = {NULL, 0, 0};
+  png_bytep *volatile rows = NULL;
 
   png_structp encoder = png_create_write_struct(PNG_LIBPNG_VER_STRING, &error, bare_png__on_error, NULL);
 
   png_infop encoder_info = png_create_info_struct(encoder);
 
   if (setjmp(error.jump)) {
-    err = js_throw_error(env, NULL, error.message);
-    assert(err == 0);
+    free(writer.data);
+    free(rows);
 
     png_destroy_write_struct(&encoder, &encoder_info);
 
+    err = js_throw_error(env, NULL, error.message);
+    assert(err == 0);
+
     return NULL;
   }
-
-  bare_png_writer_t writer = {NULL, 0, 0};
 
   png_set_write_fn(encoder, &writer, bare_png__on_write, bare_png__on_flush);
 
@@ -245,7 +257,7 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
 
   png_write_info(encoder, encoder_info);
 
-  png_bytep *rows = malloc(sizeof(png_bytep) * height);
+  rows = malloc(sizeof(png_bytep) * height);
 
   for (int y = 0; y < height; y++) {
     rows[y] = data + y * width * 4;

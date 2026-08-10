@@ -4,6 +4,7 @@
 #include <png.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -92,12 +93,17 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
 
   png_infop decoder_info = png_create_info_struct(decoder);
 
+  png_bytep *volatile rows = NULL;
+  uint8_t *volatile data = NULL;
+
   if (setjmp(error.jump)) {
-    err = js_throw_error(env, NULL, error.message);
-    assert(err == 0);
+    free(rows);
+    free(data);
 
     png_destroy_read_struct(&decoder, &decoder_info, NULL);
-    png_destroy_info_struct(decoder, &decoder_info);
+
+    err = js_throw_error(env, NULL, error.message);
+    assert(err == 0);
 
     return NULL;
   }
@@ -146,14 +152,13 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
 
   size_t data_len = rowbytes * height;
 
-  png_bytep *rows = malloc(sizeof(png_bytep) * height);
+  rows = malloc(sizeof(png_bytep) * height);
   if (rows == NULL) {
     png_error(decoder, "Out of memory");
   }
 
-  uint8_t *data = malloc(data_len);
+  data = malloc(data_len);
   if (data == NULL) {
-    free(rows);
     png_error(decoder, "Out of memory");
   }
 
@@ -166,6 +171,7 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
   png_destroy_read_struct(&decoder, &decoder_info, NULL);
 
   free(rows);
+  rows = NULL;
 
   js_value_t *result;
   err = js_create_object(env, &result);

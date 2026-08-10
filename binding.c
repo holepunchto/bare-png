@@ -97,6 +97,7 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
     assert(err == 0);
 
     png_destroy_read_struct(&decoder, &decoder_info, NULL);
+    png_destroy_info_struct(decoder, &decoder_info);
 
     return NULL;
   }

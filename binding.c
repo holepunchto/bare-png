@@ -206,7 +206,8 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
   assert(argc == 3);
 
   uint8_t *data;
-  err = js_get_typedarray_info(env, argv[0], NULL, (void **) &data, NULL, NULL, NULL);
+  size_t data_len;
+  err = js_get_typedarray_info(env, argv[0], NULL, (void **) &data, &data_len, NULL, NULL);
   assert(err == 0);
 
   int64_t width;
@@ -216,6 +217,20 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
   int64_t height;
   err = js_get_value_int64(env, argv[2], &height);
   assert(err == 0);
+
+  if (width <= 0 || height <= 0) {
+    err = js_throw_error(env, NULL, "Invalid image dimensions");
+    assert(err == 0);
+
+    return NULL;
+  }
+
+  if ((uint64_t) width > SIZE_MAX / 4 / (uint64_t) height || data_len < (size_t) width * (size_t) height * 4) {
+    err = js_throw_error(env, NULL, "Buffer too small for dimensions");
+    assert(err == 0);
+
+    return NULL;
+  }
 
   bare_png_error_t error;
 
@@ -242,7 +257,11 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
 
   png_bytep *rows = malloc(sizeof(png_bytep) * height);
 
-  for (int y = 0; y < height; y++) {
+  if (rows == NULL) {
+    png_error(encoder, "Out of memory");
+  }
+
+  for (int64_t y = 0; y < height; y++) {
     rows[y] = data + y * width * 4;
   }
 

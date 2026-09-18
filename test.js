@@ -71,3 +71,17 @@ function crc32(buf) {
 
   return (crc ^ 0xffffffff) >>> 0
 }
+
+test('encode rejects a buffer smaller than its dimensions', (t) => {
+  t.exception(
+    () => png.encode({ width: 1000, height: 1000, data: Buffer.alloc(16) }),
+    /Buffer too small/
+  )
+})
+
+test('encode rejects invalid dimensions', (t) => {
+  t.exception(
+    () => png.encode({ width: 0, height: 0, data: Buffer.alloc(0) }),
+    /Invalid image dimensions/
+  )
+})

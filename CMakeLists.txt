@@ -8,7 +8,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 project(bare_png C)
 
 fetch_package(
-  "github:madler/zlib@1.3.1"
+  "github:madler/zlib@1.3.2"
   SOURCE_DIR zlib_SOURCE_DIR
   BINARY_DIR zlib_BINARY_DIR
 )

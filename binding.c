@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BARE_PNG_MAX_PIXELS (1ull << 28)
+
 typedef struct {
   uint8_t *data;
   size_t len;
@@ -117,6 +119,10 @@ bare_png_decode(js_env_t *env, js_callback_info_t *info) {
   png_uint_32 height = png_get_image_height(decoder, decoder_info);
   int color_type = png_get_color_type(decoder, decoder_info);
   int bit_depth = png_get_bit_depth(decoder, decoder_info);
+
+  if ((uint64_t) width * height > BARE_PNG_MAX_PIXELS) {
+    png_error(decoder, "Image dimensions exceed maximum");
+  }
 
   if (bit_depth == 16) {
     png_set_strip_16(decoder);
@@ -258,9 +264,12 @@ bare_png_encode(js_env_t *env, js_callback_info_t *info) {
   png_write_info(encoder, encoder_info);
 
   rows = malloc(sizeof(png_bytep) * height);
+  if (rows == NULL) {
+    png_error(encoder, "Out of memory");
+  }
 
-  for (int y = 0; y < height; y++) {
-    rows[y] = data + y * width * 4;
+  for (int64_t y = 0; y < height; y++) {
+    rows[y] = data + (size_t) y * (size_t) width * 4;
   }
 
   png_write_image(encoder, rows);

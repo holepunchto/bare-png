@@ -20,7 +20,7 @@ add_library(ZLIB::ZLIB ALIAS zlibstatic)
 
 set(SKIP_INSTALL_ALL ON)
 
-fetch_package("github:pnggroup/libpng@1.6.48")
+fetch_package("github:pnggroup/libpng@1.6.58")
 
 add_bare_module(bare_png)
 

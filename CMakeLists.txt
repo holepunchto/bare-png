@@ -16,8 +16,6 @@ fetch_package(
 set(ZLIB_INCLUDE_DIR ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
 set(ZLIB_LIBRARY $<TARGET_FILE:zlibstatic>)
 
-add_library(ZLIB::ZLIB ALIAS zlibstatic)
-
 set(SKIP_INSTALL_ALL ON)
 
 fetch_package("github:pnggroup/libpng@1.6.58")

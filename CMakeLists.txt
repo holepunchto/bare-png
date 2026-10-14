@@ -22,6 +22,14 @@ add_library(ZLIB::ZLIB ALIAS zlibstatic)
 
 set(SKIP_INSTALL_ALL ON)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "WASI")
+  string(APPEND CMAKE_C_FLAGS " --target=${CMAKE_C_COMPILER_TARGET}")
+endif()
+
+set(PNG_SHARED OFF)
+set(PNG_TESTS OFF)
+set(PNG_TOOLS OFF)
+
 fetch_package("github:pnggroup/libpng@1.6.58")
 
 add_bare_module(bare_png)

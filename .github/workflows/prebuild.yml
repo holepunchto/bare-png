@@ -26,6 +26,9 @@ jobs:
           - os: ubuntu-24.04
             platform: android
             arch: arm
+          - os: ubuntu-24.04
+            platform: wasi
+            arch: wasm32
           - os: macos-14
             platform: darwin
             arch: x64
@@ -61,6 +64,7 @@ jobs:
           arch: ${{ matrix.arch }}
           flags: ${{ matrix.flags }}
           tags: ${{ matrix.tags}}
+          wasi: ${{ matrix.platform == 'wasi' }}
           upload: true
   merge:
     runs-on: ubuntu-latest

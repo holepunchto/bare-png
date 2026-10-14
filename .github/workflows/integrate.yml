@@ -32,6 +32,8 @@ jobs:
           - os: macos-latest
             platform: darwin
             arch: arm64
+            source: true
+            flags: --sanitize address
           - os: windows-latest
             platform: win32
             arch: x64
@@ -48,5 +50,3 @@ jobs:
           arch: ${{ matrix.arch }}
           flags: --debug ${{ matrix.flags }}
       - run: npm test
-        env:
-          LSAN_OPTIONS: suppressions=test/leaks.txt

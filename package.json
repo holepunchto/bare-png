@@ -1,6 +1,6 @@
 {
   "name": "bare-png",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "PNG support for Bare",
   "exports": {
     "./package": "./package.json",
